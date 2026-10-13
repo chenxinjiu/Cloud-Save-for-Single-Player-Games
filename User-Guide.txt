@@ -1,0 +1,152 @@
+========================================================================
+ gssync - Cloud Save Sync for Single-Player Games
+ User Guide (English)  |  v0.6.0
+========================================================================
+
+[1. WHAT IS gssync?]
+gssync is a Windows tool that syncs your single-player game saves across
+multiple PCs, using YOUR OWN private GitHub repository as the storage:
+  - Finish playing on this PC  -> click [Upload]   -> saves go to the cloud.
+  - Switch to another PC       -> click [Download] -> saves come back locally.
+It uses no third-party cloud or server - only your own GitHub account. The
+repo is private, so nobody else can see your saves.
+It works for ANY single-player game. For Starsector there is a built-in
+rule (saves + mods + launch parameters are synced together).
+
+[2. REQUIREMENTS]
+  - OS: Windows 10 / 11 (64-bit)
+  - A GitHub account (free is fine)
+  - A GitHub Token (only the "repo" scope) - see below
+  - The game installed locally (its saves must be findable on disk)
+
+[3. GETTING THE PROGRAM / HANDING IT TO SOMEONE ELSE]
+The program is a single portable .exe - double-click to run. No installer,
+no Go / Java / runtime needed.
+The release ships two exes:
+  - gssync-gui.exe   <- windowed UI, for normal users (recommended)
+  - gssync.exe       <- command line (advanced; same features)
+Easiest ways to hand it to others:
+  1) Just send gssync-gui.exe (chat / cloud drive / USB stick);
+  2) Or zip both exes into one folder and send that;
+  3) Or add the person as a collaborator of the private GitHub repo so they
+     can download it themselves.
+Notes:
+  - The exe is not code-signed, so Windows may show "Windows protected your
+    PC" on first run: click [More info] -> [Run anyway]. If antivirus flags
+    it, add an exception.
+  - Normal users only need ONE file: gssync-gui.exe.
+
+[4. FIRST-TIME SETUP (a few clicks in the window)]
+Double-click gssync-gui.exe. The window opens; on first use it lands on the
+[Settings] tab automatically. Fill in, in order:
+  1) GitHub repository: your own repo. You may enter just the repo name
+     (e.g. starsector-cloud-saves); it is completed to account/name on save.
+     Or enter "account/name" directly.
+  2) Token: create one here, tick the "repo" scope, then paste it in:
+       https://github.com/settings/tokens/new?scopes=repo&description=gssync
+     (The token is stored ONLY in your Windows Credential Manager - never in
+     any plaintext file.)
+  3) Game type:
+       starsector = Starsector (built-in rule: saves + mods + vmparams)
+       generic    = generic (any other game; you specify the save folder)
+  4) Game root: e.g. E:\yxx\Starsector (for Starsector, the game root).
+  5) Save folder: click [Browse...] to pick where the saves live; for
+     Starsector leave it empty to auto-use  root\saves.
+  6) Recognition mode / Match pattern / Process name: usually keep defaults.
+       - Starsector: keep defaults.
+       - Generic: pick the mode matching the game's save layout
+         (subdir = one save per subfolder; file = one save per file;
+          single = the whole save directory counts as one save);
+         Match pattern: filename globs, comma-separated (e.g. *.sav;
+          empty = all); Process name: the game's exe (e.g. game.exe), used
+          to detect whether the game is currently running.
+  7) Device name: distinguishes PCs; defaults to this machine's name.
+Then: click [Test connection] to verify the token/repo, then [Save settings].
+  - If the repo doesn't exist yet, tick [Create private repo if missing] and
+    it is created automatically on save.
+
+[5. DAILY USE (on the [Sync] tab)]
+  - [Upload saves]   (this PC wins): send this PC's saves to the cloud.
+  - [Download saves] (overwrites this PC): pull the cloud saves down.
+        IMPORTANT: quit the game first! If the game is running, the tool
+        refuses to download, to avoid corrupting saves.
+  - [View status]: see which saves differ and which side is newer.
+  - [Upload mods] / [Download mods] (Starsector): sync mods too, so you do
+    not have to copy mod folders by hand.
+
+[6. USING IT ON MULTIPLE PCs]
+  - Saves sync only if the PCs share the SAME repo and the SAME token
+    (same GitHub account).
+  - Each PC may have its own device name (optional).
+  - Typical flow: PC A finishes -> [Upload] ... PC B -> [Download] -> play
+    -> PC B -> [Upload] -> ...
+  - If you hand the tool to ANOTHER PERSON, recommend they use their own
+    GitHub account and repo, so each side stays independent.
+
+[7. AUTO-UPDATE]
+Every time you open gssync-gui.exe it checks whether a newer version exists
+and auto-downloads / replaces it:
+  - Close and reopen the window to apply the update.
+  - Requires access to the "app repo" (the repo this program ships from).
+  - If the check fails it only shows one status line; nothing else breaks.
+
+[8. WHERE DATA LIVES]
+  - Config:  %USERPROFILE%\.gssync\config.json  (contains no token)
+  - Token:   Windows Credential Manager (target "gssync", DPAPI-encrypted)
+  - Cloud:   your private GitHub repo -> Releases -> assets under tag
+             "gssync"
+  - History: overwritten old saves are archived locally in
+             %USERPROFILE%\.gssync\history\
+
+[9. ADVANCED: THE COMMAND LINE]
+gssync.exe offers the same features as the window:
+  gssync init         interactive first-time setup
+  gssync gui          open the graphical window
+  gssync push         manual upload (this PC wins)
+  gssync pull         manual download (cloud wins; old copy archived)
+  gssync status       show local vs cloud differences
+  gssync sync         one two-way sync
+        --upload-only    upload only
+        --download-only  download only
+        --reset-cloud    rebuild the cloud from this PC (disaster recovery)
+  gssync mods-push    upload mods (new/changed mods are packed and uploaded)
+  gssync mods-pull    download mods (cloud wins; overwrites local mods)
+  gssync update       check and download updates (--check: check only)
+  gssync version      print the version
+  gssync watch        daemon: continuous auto-sync (while the game runs it
+                      uploads only, never downloads)
+  gssync history list|restore|clean    manage local history
+  gssync delete <save>     delete a save (archive locally, then delete in
+                           the cloud too)
+
+[10. FAQ]
+  Q: Can't reach GitHub / it keeps failing?
+  A: It is almost always the network. Turn on your proxy/VPN (global or
+     accelerator mode) and retry. The tool will not force-retry endlessly.
+  Q: "Token not found"?
+  A: Leaving the token blank reuses the saved one. If none exists, paste a
+     token on the Settings tab and save.
+  Q: The Download button does nothing / says "game is running"?
+  A: Fully quit the game first - this prevents overwriting saves mid-write.
+  Q: Where are the saves?
+  A: Starsector: <game root>\saves. Other games: set it in [Save folder].
+  Q: Saves did not appear on my other PC?
+  A: Make sure both PCs use the same repo and the same token, then click
+     [Download] on the new PC.
+  Q: Is the token safe?
+  A: It is stored encrypted in the local Windows Credential Manager;
+     config.json holds no token. When sharing the tool, tell others to use
+     their OWN token - never copy yours.
+  Q: How do I wipe everything?
+  A: Delete %USERPROFILE%\.gssync and remove the "gssync" entry in the
+     Windows Credential Manager.
+
+[11. SECURITY TIPS]
+  - Never post your token in plaintext; the stored copy is encrypted.
+  - Keep the repo PRIVATE - do not switch it to public.
+  - The repo holds your actual game saves; do not publish or share them.
+
+========================================================================
+ gssync v0.6.0 - Cloud save sync for single-player games
+ Chinese version: see 使用教程.txt in the same folder
+========================================================================
